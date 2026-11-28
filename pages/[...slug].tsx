@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { GetStaticPaths, GetStaticProps } from 'next'
 import fs from 'fs'
 import path from 'path'
+import { getImageSize } from '../templates/imageSize'
 
 import DefaultTemplate from '../templates/DefaultTemplate'
 import BlogTemplate from '../templates/BlogTemplate'
@@ -91,9 +92,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
   const dataPath = path.join(process.cwd(), 'data.json')
   const data: SiteData = JSON.parse(fs.readFileSync(dataPath, 'utf8'))
   
-  const paths = data.pages?.map(page => ({
-    params: { slug: page.slug.replace(/^\/|\/$/g, '') }
-  })) || []
+  const paths = (data.pages || [])
+    .map(page => page.slug.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean))
+    .filter(parts => parts.length > 0)
+    .map(parts => ({ params: { slug: parts } }))
 
   return {
     paths,
@@ -105,8 +107,11 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const dataPath = path.join(process.cwd(), 'data.json')
   const data: SiteData = JSON.parse(fs.readFileSync(dataPath, 'utf8'))
   
-  const slugParam = (params?.slug as string || '').replace(/^\/|\/$/g, '')
-  const page = data.pages?.find(p => p.slug.replace(/^\/|\/$/g, '') === slugParam)
+  const rawSlug = params?.slug
+  const slugParam = Array.isArray(rawSlug)
+    ? rawSlug.join('/')
+    : String(rawSlug || '').replace(/^\/+|\/+$/g, '')
+  const page = data.pages?.find(p => p.slug.replace(/^\/+|\/+$/g, '') === slugParam)
 
   if (!page) {
     return {
@@ -120,7 +125,10 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     )
   )
 
+  const logoSize = await getImageSize(data.logo, data)
+
   const site = {
+    logo_size: logoSize,
     name: data.name,
     url: data.url,
     site_name: data.site_name,

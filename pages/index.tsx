@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { renderSeoMarkup } from '../templates/seoMarkup'
+import { getImageSize, ImageSize } from '../templates/imageSize'
 import {array} from "prop-types";
 
 interface MediaFile {
@@ -1209,7 +1210,13 @@ const styles = `
     }
   }
 `;
-export default function TupchiyTemplate() {
+export async function getStaticProps() {
+  const data = require('../data.json')
+  const logoSize = await getImageSize(data.logo, data)
+  return { props: { logoSize } }
+}
+
+export default function TupchiyTemplate({ logoSize = null }: { logoSize?: ImageSize | null }) {
   const data: CasinoData = require('../data.json')
   const htmlHeadContent = data.html_head || data.htmlHead || '';
   const extractMetaDescription = (html: string): string => {
@@ -1485,6 +1492,8 @@ export default function TupchiyTemplate() {
           isHomepage: true,
           title: pageSeoTitle || data.site_name || data.name,
           description: metaDescription,
+          h1: heroTitle,
+          logoSize,
           lang: data.language_code,
           image: data.main_background_img || data.heroImage || data.hero_image,
           htmlHead: htmlHeadContent,

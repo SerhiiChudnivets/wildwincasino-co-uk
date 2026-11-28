@@ -942,6 +942,8 @@ export default function HomepageTemplate({ page, site }: { page: PageData; site:
           slug: page.slug,
           title: pageSeoTitle || page.title || site.site_name || site.name,
           description: metaDescription,
+          h1: heroTitle,
+          logoSize: site.logo_size,
           pageName: page.title,
           lang: page.lang || data.language_code,
           image: page.heroImage || page.hero_image || data.main_background_img,

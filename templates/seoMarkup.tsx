@@ -21,6 +21,10 @@ export interface SeoMarkupInput {
   title: string
   /** SEO description сторінки */
   description: string
+  /** H1, який виводиться на цій сторінці (для alternateName) */
+  h1?: string
+  /** Розміри логотипа, визначені під час білда (getImageSize у getStaticProps) */
+  logoSize?: { width: number; height: number } | null
   /** Назва внутрішньої сторінки для breadcrumbs (Title в Pages) */
   pageName?: string
   /** lang сторінки */
@@ -90,7 +94,7 @@ export function renderSeoMarkup(input: SeoMarkupInput): React.ReactElement[] {
   const absoluteUrl = (url: string) => (/^https?:\/\//i.test(url) ? url : `${siteUrl}${url.replace(/^\/+/, '')}`)
 
   const brand = data.home_name || data.name || host
-  const alternateName = data.hero_title || data.heroTitle || brand
+  const alternateName = (typeof input.h1 === 'string' && input.h1.trim()) || data.hero_title || data.heroTitle || brand
   const siteLang = data.language_code || input.lang || 'en'
   const pageLang = input.lang || siteLang
 
@@ -105,8 +109,8 @@ export function renderSeoMarkup(input: SeoMarkupInput): React.ReactElement[] {
         inLanguage: siteLang,
         url: absoluteUrl(logoMedia.url),
         contentUrl: absoluteUrl(logoMedia.url),
-        ...(logoMedia.width ? { width: logoMedia.width } : {}),
-        ...(logoMedia.height ? { height: logoMedia.height } : {}),
+        ...((logoMedia.width || input.logoSize?.width) ? { width: logoMedia.width || input.logoSize?.width } : {}),
+        ...((logoMedia.height || input.logoSize?.height) ? { height: logoMedia.height || input.logoSize?.height } : {}),
         caption: brand,
       }
     : undefined
@@ -171,7 +175,8 @@ export function renderSeoMarkup(input: SeoMarkupInput): React.ReactElement[] {
       },
     },
     ...(isHomepage ? { about: organization } : {}),
-    ...(logoObject ? { image: logoObject } : {}),
+    // image — тільки на головній сторінці
+    ...(isHomepage && logoObject ? { image: logoObject } : {}),
     breadcrumb: {
       '@type': 'BreadcrumbList',
       '@id': `${pageUrl}#breadcrumb`,
